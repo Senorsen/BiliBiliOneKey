@@ -1,0 +1,6 @@
+config.ini
+*.swp
+_.*
+/.idea/*
+BiliBiliOneKey.iml
+/target/*

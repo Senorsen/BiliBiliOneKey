@@ -7,8 +7,8 @@ import top.mothership.entity.BiliBiliResponse;
 import top.mothership.entity.Data;
 import top.mothership.entity.OBSSetting;
 import top.mothership.entity.Settings;
-
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +19,46 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
 
+    }
+
+    void stopLive(String roomId, String areaV2, String csrfToken, String cookies) throws InterruptedException {
+        OkHttpClient client = new OkHttpClient();
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        String content = "room_id=" + roomId
+                + "&platform=pc"
+                + "&csrf_token=" + csrfToken
+                + "&csrf=" + csrfToken;
+        System.out.println("body: " + content);
+        RequestBody body = RequestBody.create(mediaType, content);
+        Request request = new Request.Builder()
+                .url("https://api.live.bilibili.com/room/v1/Room/stopLive")
+                .post(body)
+                .addHeader("Cookie", cookies)
+                .build();
+        Response response;
+        try {
+            response = client.newCall(request).execute();
+            String responseBody = response.body().string();
+            BiliBiliResponse biliBiliResponse = new GsonBuilder().create().fromJson(responseBody, BiliBiliResponse.class);
+            switch (biliBiliResponse.getCode()) {
+                case 0:
+                    System.out.println("下播成功！");
+                    TimeUnit.SECONDS.sleep(10);
+                    break;
+
+                default:
+                    System.err.println(Instant.now()
+                            + " 请求 Bilibili 开播接口失败，错误码：" + biliBiliResponse.getCode()
+                            + " 错误信息：" + biliBiliResponse.getMsg() + "，程序即将退出；");
+                    TimeUnit.SECONDS.sleep(10);
+            }
+        } catch (IOException e) {
+            System.err.println("下播失败， IOException: " + e.getMessage());
+            TimeUnit.SECONDS.sleep(10);
+        }
+    }
+
+    void startLive() throws InterruptedException {
         String jarFilePath = System.getProperty("user.dir");
         String userProfilePath = System.getProperty("user.home");
         boolean checkRtmpCode = false;
@@ -44,10 +84,11 @@ public class Main {
 //        jarFilePath = file.getAbsolutePath();
         //读取配置
         File syncConfigFile = new File(jarFilePath + "\\config.ini");
+        System.out.println("Try to read config from " + syncConfigFile);
         if (syncConfigFile.exists()) {
             try (InputStream in =
                          new FileInputStream(syncConfigFile)) {
-                syncConfig.load(in);
+                syncConfig.load(new InputStreamReader(in, StandardCharsets.UTF_8));
             } catch (IOException e) {
                 System.err.println(Instant.now() + " 读取Sync配置文件时发生IO异常：" + e.getMessage() + "，程序即将退出；");
                 TimeUnit.DAYS.sleep(10);
@@ -73,7 +114,7 @@ public class Main {
         if (obsConfigFile.exists()) {
             try (InputStream in =
                          new FileInputStream(obsConfigFile)) {
-                obsConfig.load(in);
+                obsConfig.load(new InputStreamReader(in, StandardCharsets.UTF_8));
             } catch (IOException e) {
                 System.err.println(Instant.now() + " 读取OBS配置文件时发生IO异常：" + e.getMessage() + "，程序即将退出；");
                 TimeUnit.SECONDS.sleep(10);
@@ -111,13 +152,16 @@ public class Main {
 
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create(mediaType,
-                "room_id=" + syncConfig.getProperty("RoomID")
-                        + "&platform=pc&area_v2=107");
+        String content = "room_id=" + syncConfig.getProperty("RoomID")
+                + "&platform=pc&area_v2=" + syncConfig.getProperty("area_v2")
+                + "&csrf_token=" + syncConfig.getProperty("csrf_token")
+                + "&csrf=" + syncConfig.getProperty("csrf_token");
+        System.out.println("body: " + content);
+        RequestBody body = RequestBody.create(mediaType, content);
         Request request = new Request.Builder()
-                .url("http://api.live.bilibili.com/room/v1/Room/startLive")
+                .url("https://api.live.bilibili.com/room/v1/Room/startLive")
                 .post(body)
-                .addHeader("cookie", syncConfig.getProperty("Cookies"))
+                .addHeader("Cookie", syncConfig.getProperty("Cookies"))
                 .build();
         Response response;
         try {
@@ -150,19 +194,17 @@ public class Main {
                             }
                         }
                     }
-                    TimeUnit.SECONDS.sleep(2);
+                    TimeUnit.SECONDS.sleep(10);
                     break;
                 default:
                     System.err.println(Instant.now()
-                            + " 请求BiliBili接口失败，错误码：" + biliBiliResponse.getCode()
-                            + "错误信息：" + biliBiliResponse.getMsg() + "，程序即将退出；");
-                    TimeUnit.DAYS.sleep(10);
-                    return;
+                            + " 请求 Bilibili 开播接口失败，错误码：" + biliBiliResponse.getCode()
+                            + " 错误信息：" + biliBiliResponse.getMsg() + "，程序即将退出；");
+                    TimeUnit.SECONDS.sleep(10);
             }
         } catch (IOException e) {
-            System.err.println(Instant.now() + " 请求BiliBili接口时发生异常：" + e.getMessage() + "，程序即将退出；");
-            TimeUnit.DAYS.sleep(10);
-            return;
+            System.err.println(Instant.now() + " 请求 Bilibili 接口时发生异常：" + e.getMessage() + "，程序即将退出；");
+            TimeUnit.SECONDS.sleep(10);
         }
 
     }
