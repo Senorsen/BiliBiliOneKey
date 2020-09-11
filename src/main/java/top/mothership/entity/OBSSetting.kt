@@ -1,9 +1,6 @@
-package top.mothership.entity;
+package top.mothership.entity
 
-import lombok.Data;
-
-@Data
-public class OBSSetting {
-    private Settings settings;
-    private String type;
-}
+data class OBSSetting(
+    var settings: Settings? = null,
+    val type: String? = null
+)

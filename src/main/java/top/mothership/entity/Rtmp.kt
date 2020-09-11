@@ -1,10 +1,7 @@
-package top.mothership.entity;
+package top.mothership.entity
 
-@lombok.Data
-public class Rtmp {
-    private String addr;
-    private String code;
-//    private String newLink;
-    private String provider;
-
-}
+data class Rtmp(
+    val addr: String? = null,
+    val code: String? = null,
+    val provider: String? = null
+)

@@ -1,9 +1,6 @@
-package top.mothership.entity;
+package top.mothership.entity
 
-import lombok.Data;
-
-@Data
-public class Settings {
-    private String key;
-    private String server;
-}
+data class Settings(
+    var key: String? = null,
+    var server: String? = null
+)
