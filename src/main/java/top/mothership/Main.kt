@@ -28,12 +28,12 @@ fun main(args: Array<String>) {
             }
         }
     }
-    val configFile = if (args.isNotEmpty() && args[0].endsWith(".ini")) {
-        args[0]
+    val (arr, configFile) = if (args.isNotEmpty() && args[0].endsWith(".ini")) {
+        args.toList().subList(1, args.size).toTypedArray() to args[0]
     } else {
-        "config.ini"
+        args to "config.ini"
     }
-    initAccordingToArgs(args.toList().subList(1, args.size - 1).toTypedArray(), configFile)
+    initAccordingToArgs(arr, configFile)
 }
 
 
