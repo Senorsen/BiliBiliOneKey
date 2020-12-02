@@ -15,17 +15,25 @@ import java.util.concurrent.TimeUnit.*
 import java.util.regex.Pattern
 
 fun main(args: Array<String>) {
-    when {
-        args.isEmpty() -> {
-            init(0)
-        }
-        args[0] == "--stop" -> {
-            init(1)
-        }
-        else -> {
-            System.err.println("Error: invalid args, no arg to start, --stop to stop.")
+    val initAccordingToArgs = { arr: Array<String>, configFile: String ->
+        when {
+            arr.isEmpty() -> {
+                init(0, configFile)
+            }
+            arr[0] == "--stop" -> {
+                init(1, configFile)
+            }
+            else -> {
+                System.err.println("Error: invalid args, no arg to start, --stop to stop.")
+            }
         }
     }
+    val configFile = if (args.isNotEmpty() && args[0].endsWith(".ini")) {
+        args[0]
+    } else {
+        "config.ini"
+    }
+    initAccordingToArgs(args.toList().subList(1, args.size - 1).toTypedArray(), configFile)
 }
 
 
@@ -140,7 +148,7 @@ fun startLive(
     }
 }
 
-fun init(type: Int) {
+fun init(type: Int, configFile: String) {
     val jarFilePath = System.getProperty("user.dir")
     val userProfilePath = System.getProperty("user.home")
     val syncConfig = Properties()
@@ -149,7 +157,7 @@ fun init(type: Int) {
     var obsServiceJson: File? = null
     var obsProfileName = "未命名"
     val bilibiliUid = Pattern.compile("DedeUserID=(\\d*);")
-    val syncConfigFile = File(jarFilePath + File.separator + "config.ini")
+    val syncConfigFile = File(jarFilePath + File.separator + configFile)
     println("Try to read config from $syncConfigFile")
     if (syncConfigFile.exists()) {
         try {
